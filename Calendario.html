@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Calendar Viewer</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background: #191919;
+            color: #ffffff;
+
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+
+        /* =========================
+           CALENDAR
+        ========================= */
+
+        .calendar-widget {
+            width: 360px;
+            padding: 24px;
+
+            background: #121217;
+
+            border: 1px solid #24242c;
+            border-radius: 20px;
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.35);
+        }
+
+
+        /* =========================
+           WEATHER
+        ========================= */
+
+        .weather {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 24px;
+        }
+
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .weather-title {
+            color: #858590;
+
+            font-size: 12px;
+            text-transform: uppercase;
+
+            letter-spacing: 1.5px;
+        }
+
+        .weather-condition {
+            font-size: 14px;
+            color: #d8d8df;
+        }
+
+        .temperature {
+            font-size: 28px;
+            font-weight: 500;
+
+            letter-spacing: -1px;
+        }
+
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 22px;
+        }
+
+        .month-year {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .month {
+            font-size: 21px;
+            font-weight: 600;
+
+            text-transform: capitalize;
+        }
+
+        .year {
+            color: #777780;
+            font-size: 13px;
+        }
+
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .navigation {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav-button {
+            width: 32px;
+            height: 32px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid #28282f;
+            border-radius: 9px;
+
+            background: #18181e;
+            color: #aaaab3;
+
+            font-size: 18px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .nav-button:hover {
+            background: #222229;
+            color: white;
+
+            transform: translateY(-1px);
+        }
+
+        .nav-button:active {
+            transform: translateY(0);
+        }
+
+
+        /* =========================
+           DAYS OF WEEK
+        ========================= */
+
+        .weekdays {
+            display: grid;
+
+            grid-template-columns: repeat(7, 1fr);
+
+            margin-bottom: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+
+            color: #66666f;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            padding: 5px 0;
+
+            text-transform: uppercase;
+        }
+
+
+        /* =========================
+           DAYS
+        ========================= */
+
+        .days {
+            display: grid;
+
+            grid-template-columns: repeat(7, 1fr);
+
+            gap: 5px;
+        }
+
+        .day {
+            height: 39px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            color: #c9c9d0;
+
+            font-size: 13px;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .day:not(.empty):hover {
+            background: #1e1e25;
+            color: white;
+        }
+
+
+        /* Dias de outros meses */
+
+        .other-month {
+            color: #3f3f47;
+        }
+
+
+        /* Dia atual */
+
+        .today {
+            background: #ffffff;
+            color: #0b0b0f;
+
+            font-weight: 700;
+
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .today:hover {
+            background: #ffffff !important;
+            color: #0b0b0f !important;
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        .calendar-footer {
+            margin-top: 18px;
+
+            padding-top: 15px;
+
+            border-top: 1px solid #24242c;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .today-label {
+            color: #777780;
+
+            font-size: 11px;
+        }
+
+        .today-date {
+            color: #cfcfd5;
+
+            font-size: 12px;
+        }
+
+
+        /* =========================
+           ANIMAÇÃO
+        ========================= */
+
+        .days {
+            animation: calendarFade 0.25s ease;
+        }
+
+        @keyframes calendarFade {
+
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+    <div class="calendar-widget">
+
+        <!-- CLIMA -->
+
+        <div class="weather">
+
+            <div class="weather-info">
+
+                <span class="weather-title">
+                    Clima
+                </span>
+
+                <span
+                    id="weatherCondition"
+                    class="weather-condition">
+                    Carregando...
+                </span>
+
+            </div>
+
+            <div
+                id="temperature"
+                class="temperature">
+                --°C
+            </div>
+
+        </div>
+
+
+        <!-- CABEÇALHO -->
+
+        <div class="calendar-header">
+
+            <div class="month-year">
+
+                <span
+                    id="month"
+                    class="month">
+                    Janeiro
+                </span>
+
+                <span
+                    id="year"
+                    class="year">
+                    2026
+                </span>
+
+            </div>
+
+
+            <div class="navigation">
+
+                <button
+                    id="previousMonth"
+                    class="nav-button">
+                    ‹
+                </button>
+
+                <button
+                    id="nextMonth"
+                    class="nav-button">
+                    ›
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- DIAS DA SEMANA -->
+
+        <div class="weekdays">
+
+            <div class="weekday">Dom</div>
+            <div class="weekday">Seg</div>
+            <div class="weekday">Ter</div>
+            <div class="weekday">Qua</div>
+            <div class="weekday">Qui</div>
+            <div class="weekday">Sex</div>
+            <div class="weekday">Sáb</div>
+
+        </div>
+
+
+        <!-- DIAS -->
+
+        <div
+            id="days"
+            class="days">
+        </div>
+
+
+        <!-- RODAPÉ -->
+
+        <div class="calendar-footer">
+
+            <span class="today-label">
+                Hoje
+            </span>
+
+            <span
+                id="todayDate"
+                class="today-date">
+                25/08/2026
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        /* =========================
+           DATA ATUAL
+        ========================= */
+
+        const today = new Date();
+
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
+
+
+        /* =========================
+           ELEMENTOS
+        ========================= */
+
+        const monthElement =
+            document.getElementById("month");
+
+        const yearElement =
+            document.getElementById("year");
+
+        const daysElement =
+            document.getElementById("days");
+
+        const todayDateElement =
+            document.getElementById("todayDate");
+
+        const previousButton =
+            document.getElementById("previousMonth");
+
+        const nextButton =
+            document.getElementById("nextMonth");
+
+
+        /* =========================
+           MESES
+        ========================= */
+
+        const months = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro"
+        ];
+
+
+        /* =========================
+           FORMATAR NÚMEROS
+        ========================= */
+
+        function formatNumber(number) {
+
+            return String(number).padStart(2, "0");
+
+        }
+
+
+        /* =========================
+           RENDERIZAR CALENDÁRIO
+        ========================= */
+
+        function renderCalendar() {
+
+            monthElement.textContent =
+                months[currentMonth];
+
+            yearElement.textContent =
+                currentYear;
+
+
+            daysElement.innerHTML = "";
+
+
+            /*
+             * Primeiro dia do mês
+             */
+
+            const firstDay =
+                new Date(
+                    currentYear,
+                    currentMonth,
+                    1
+                ).getDay();
+
+
+            /*
+             * Quantidade de dias do mês
+             */
+
+            const daysInMonth =
+                new Date(
+                    currentYear,
+                    currentMonth + 1,
+                    0
+                ).getDate();
+
+
+            /*
+             * Dias do mês anterior
+             */
+
+            const daysInPreviousMonth =
+                new Date(
+                    currentYear,
+                    currentMonth,
+                    0
+                ).getDate();
+
+
+            /*
+             * Preenche os dias anteriores
+             */
+
+            for (
+                let i = firstDay - 1;
+                i >= 0;
+                i--
+            ) {
+
+                const day =
+                    document.createElement("div");
+
+                day.classList.add(
+                    "day",
+                    "other-month"
+                );
+
+                day.textContent =
+                    daysInPreviousMonth - i;
+
+                daysElement.appendChild(day);
+
+            }
+
+
+            /*
+             * Dias do mês atual
+             */
+
+            for (
+                let dayNumber = 1;
+                dayNumber <= daysInMonth;
+                dayNumber++
+            ) {
+
+                const day =
+                    document.createElement("div");
+
+                day.classList.add("day");
+
+                day.textContent =
+                    dayNumber;
+
+
+                /*
+                 * Verifica se é hoje
+                 */
+
+                if (
+                    dayNumber === today.getDate() &&
+                    currentMonth === today.getMonth() &&
+                    currentYear === today.getFullYear()
+                ) {
+
+                    day.classList.add("today");
+
+                }
+
+
+                daysElement.appendChild(day);
+
+            }
+
+
+            /*
+             * Completa a última semana
+             */
+
+            const totalDays =
+                firstDay + daysInMonth;
+
+            const remainingDays =
+                (7 - (totalDays % 7)) % 7;
+
+
+            for (
+                let i = 1;
+                i <= remainingDays;
+                i++
+            ) {
+
+                const day =
+                    document.createElement("div");
+
+                day.classList.add(
+                    "day",
+                    "other-month"
+                );
+
+                day.textContent = i;
+
+                daysElement.appendChild(day);
+
+            }
+
+        }
+
+
+        /* =========================
+           NAVEGAÇÃO
+        ========================= */
+
+        previousButton.addEventListener(
+            "click",
+            () => {
+
+                currentMonth--;
+
+                if (currentMonth < 0) {
+
+                    currentMonth = 11;
+                    currentYear--;
+
+                }
+
+                renderCalendar();
+
+            }
+        );
+
+
+        nextButton.addEventListener(
+            "click",
+            () => {
+
+                currentMonth++;
+
+                if (currentMonth > 11) {
+
+                    currentMonth = 0;
+                    currentYear++;
+
+                }
+
+                renderCalendar();
+
+            }
+        );
+
+
+        /* =========================
+           DATA DE HOJE
+        ========================= */
+
+        function renderTodayDate() {
+
+            const day =
+                formatNumber(today.getDate());
+
+            const month =
+                formatNumber(today.getMonth() + 1);
+
+            const year =
+                today.getFullYear();
+
+            todayDateElement.textContent =
+                `${day}/${month}/${year}`;
+
+        }
+
+
+        /* =========================
+           CLIMA
+        ========================= */
+
+        const temperatureElement =
+            document.getElementById("temperature");
+
+        const weatherConditionElement =
+            document.getElementById("weatherCondition");
+
+
+        /*
+         * Converte o código climático
+         * da Open-Meteo para português
+         */
+
+        function getWeatherDescription(code) {
+
+            const weatherCodes = {
+
+                0: "Céu limpo",
+
+                1: "Predominantemente limpo",
+                2: "Parcialmente nublado",
+                3: "Nublado",
+
+                45: "Neblina",
+                48: "Neblina",
+
+                51: "Garoa leve",
+                53: "Garoa",
+                55: "Garoa forte",
+
+                61: "Chuva leve",
+                63: "Chuva",
+                65: "Chuva forte",
+
+                71: "Neve leve",
+                73: "Neve",
+                75: "Neve forte",
+
+                80: "Pancadas de chuva",
+                81: "Pancadas de chuva",
+                82: "Pancadas fortes",
+
+                95: "Tempestade",
+                96: "Tempestade com granizo",
+                99: "Tempestade com granizo"
+
+            };
+
+            return weatherCodes[code] || "Clima desconhecido";
+
+        }
+
+
+        /*
+         * Busca o clima
+         */
+
+        async function getWeather(
+            latitude,
+            longitude
+        ) {
+
+            try {
+
+                const url =
+                    `https://api.open-meteo.com/v1/forecast` +
+                    `?latitude=${latitude}` +
+                    `&longitude=${longitude}` +
+                    `&current=temperature_2m,weather_code` +
+                    `&timezone=auto`;
+
+
+                const response =
+                    await fetch(url);
+
+
+                const data =
+                    await response.json();
+
+
+                const temperature =
+                    Math.round(
+                        data.current.temperature_2m
+                    );
+
+
+                const weatherCode =
+                    data.current.weather_code;
+
+
+                temperatureElement.textContent =
+                    `${temperature}°C`;
+
+
+                weatherConditionElement.textContent =
+                    getWeatherDescription(
+                        weatherCode
+                    );
+
+            }
+
+            catch (error) {
+
+                temperatureElement.textContent =
+                    "--°C";
+
+                weatherConditionElement.textContent =
+                    "Clima indisponível";
+
+            }
+
+        }
+
+
+        /*
+         * Tenta pegar a localização
+         * do usuário
+         */
+
+        function loadWeather() {
+
+            if (
+                navigator.geolocation
+            ) {
+
+                navigator.geolocation.getCurrentPosition(
+
+                    position => {
+
+                        getWeather(
+                            position.coords.latitude,
+                            position.coords.longitude
+                        );
+
+                    },
+
+                    () => {
+
+                        /*
+                         * São Paulo como fallback
+                         */
+
+                        getWeather(
+                            -23.5505,
+                            -46.6333
+                        );
+
+                    }
+
+                );
+
+            }
+
+            else {
+
+                getWeather(
+                    -23.5505,
+                    -46.6333
+                );
+
+            }
+
+        }
+
+
+        /* =========================
+           INICIALIZAÇÃO
+        ========================= */
+
+        renderCalendar();
+
+        renderTodayDate();
+
+        loadWeather();
+
+    </script>
+
+</body>
+</html>
